@@ -13,7 +13,6 @@ cwst = { git = "https://github.com/corbet-foss/cwst", branch = "main" }
 ctcs = { git = "https://github.com/corbet-foss/ctcs", branch = "main" }
 cthr = { git = "https://github.com/corbet-foss/cthr", branch = "main" }
 cdlv = { git = "https://github.com/corbet-foss/cdlv", branch = "main" }
-cwvs = { git = "https://github.com/corbet-foss/cwvs", branch = "main" }
 serde = { version = "1", features = ["derive"] }
 schemars = "1"
 

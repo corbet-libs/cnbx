@@ -170,7 +170,7 @@ fn established_message_uses_real_owners_through_the_facade() {
         assert!(sent.receipt(&id).is_err());
         let wire=sent.outgoing(&mut a.keys,&ah,&mut directory,&mut astore,[4;32]).await.unwrap();
         assert_eq!(bi.view(SLOT,&bstore).unwrap().acknowledge(wire.bytes(),&mut directory).await.err(),Some(cnbx::Error::UnexpectedMessage));
-        let receiving=bi.view(SLOT,&bstore).unwrap().receive(wire.bytes(),&mut b.port(),&mut Grant::new(),&mut directory).await.unwrap();
+        let cnbx::Receive::Pending(receiving)=bi.view(SLOT,&bstore).unwrap().receive(wire.bytes(),&mut b.port(),&mut Grant::new(),&mut directory).await.unwrap() else {panic!()};
         let prepared=receiving.prepare_receipt(&mut b.keys,&bh).await.unwrap();
         assert!(bi.view(SLOT,&bstore).unwrap().history().is_empty());
         let received=prepared.commit(&mut b.port(),&mut Grant::new(),&mut directory,&mut bstore,[3;32]).await.unwrap();
@@ -178,9 +178,17 @@ fn established_message_uses_real_owners_through_the_facade() {
         assert_eq!(received.outgoing(&mut b.keys,&bh,&mut directory,&mut bstore,[4;32]).await.err(),Some(cnbx::Error::UnexpectedMessage));
         let receipt=received.receipt(&id).unwrap();
         assert_eq!(ai.view(SLOT,&astore).unwrap().receive(receipt.bytes(),&mut a.port(),&mut Grant::new(),&mut directory).await.err(),Some(cnbx::Error::UnexpectedMessage));
-        let pending=ai.view(SLOT,&astore).unwrap().acknowledge(receipt.bytes(),&mut directory).await.unwrap();
+        let cnbx::Acknowledgement::Pending(pending)=ai.view(SLOT,&astore).unwrap().acknowledge(receipt.bytes(),&mut directory).await.unwrap() else {panic!()};
         let accepted=pending.commit(&mut a.port(),&mut Grant::new(),&mut directory,&mut astore,[5;32]).await.unwrap();
         assert_eq!(accepted.delivery_status(&id),Some(Status::Accepted));assert_eq!(accepted.history()[0].bytes,b"facade hello");
+        match bi.view(SLOT,&bstore).unwrap().receive(wire.bytes(),&mut b.port(),&mut Grant::new(),&mut directory).await.unwrap() {
+            cnbx::Receive::Duplicate(repeated)=>assert_eq!(repeated.bytes(),receipt.bytes()),
+            _=>panic!("no second decryption"),
+        }
+        match ai.view(SLOT,&astore).unwrap().acknowledge(receipt.bytes(),&mut directory).await.unwrap() {
+            cnbx::Acknowledgement::AlreadyAccepted(message)=>assert_eq!(message,id),
+            _=>panic!("no second history checkpoint"),
+        }
         let current=ai.view(SLOT,&astore).unwrap();assert_eq!(current.relation("bob").unwrap().state,ctcs::State::Established);assert_eq!(current.delivery_status(&id),Some(Status::Accepted));
     });
 }

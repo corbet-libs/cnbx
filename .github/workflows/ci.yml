@@ -2,7 +2,7 @@ name: ci
 
 on:
   push:
-    branches: [main, 'ci/**']
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -111,7 +111,7 @@ jobs:
       - run: cargo deny --locked check advisories
 
   coverage:
-    needs: check
+    needs: resolve
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

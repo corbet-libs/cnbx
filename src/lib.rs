@@ -10,6 +10,8 @@ pub struct View {contacts:ctcs::Contacts,threads:cthr::Threads,delivery:cdlv::De
 pub struct Pending(cdlv::Candidate);
 pub struct Published(cdlv::Committed);
 /// An authenticated real MLS receive, still with no visible plaintext or ACK.
+pub enum Receive { Pending(Receiving), Duplicate(cdlv::Wire) }
+pub enum Acknowledgement { Pending(Pending), AlreadyAccepted([u8;32]) }
 pub struct Receiving {delivery:cdlv::Delivery,threads:cthr::Candidate,incoming:cdlv::Incoming}
 impl Inbox {
     pub fn new(binding:Binding)->Self {Self{binding}}
@@ -29,20 +31,22 @@ impl View {
         let threads=self.threads.send(keys,authority,bytes).await.map_err(Error::Threads)?;
         Ok(Pending(self.delivery.outgoing(threads,&self.contacts).map_err(Error::Delivery)?))
     }
-    pub async fn receive(self,wire:&[u8],keys:&mut impl cthr::keys::Custody,authority:&mut impl cthr::DirectAuthority,devices:&mut impl ctcs::DeviceAuthority)->Result<Receiving> {
+    pub async fn receive(self,wire:&[u8],keys:&mut impl cthr::keys::Custody,authority:&mut impl cthr::DirectAuthority,devices:&mut impl ctcs::DeviceAuthority)->Result<Receive> {
         let incoming=match self.delivery.authenticate(wire,devices,&self.contacts).await.map_err(Error::Delivery)? {
             cdlv::Authenticated::Data(incoming)=>incoming,
-            cdlv::Authenticated::Ack(_)=>return Err(Error::UnexpectedMessage),
+            cdlv::Authenticated::Duplicate(receipt)=>return Ok(Receive::Duplicate(receipt)),
+            _=>return Err(Error::UnexpectedMessage),
         };
         let threads=self.threads.receive(keys,authority,incoming.ciphertext()).await.map_err(Error::Threads)?;
-        Ok(Receiving{delivery:self.delivery,threads,incoming})
+        Ok(Receive::Pending(Receiving{delivery:self.delivery,threads,incoming}))
     }
-    pub async fn acknowledge(&self,wire:&[u8],devices:&mut impl ctcs::DeviceAuthority)->Result<Pending> {
+    pub async fn acknowledge(&self,wire:&[u8],devices:&mut impl ctcs::DeviceAuthority)->Result<Acknowledgement> {
         let ack=match self.delivery.authenticate(wire,devices,&self.contacts).await.map_err(Error::Delivery)? {
             cdlv::Authenticated::Ack(ack)=>ack,
-            cdlv::Authenticated::Data(_)=>return Err(Error::UnexpectedMessage),
+            cdlv::Authenticated::AlreadyAccepted(message)=>return Ok(Acknowledgement::AlreadyAccepted(message)),
+            _=>return Err(Error::UnexpectedMessage),
         };
-        Ok(Pending(self.delivery.acknowledged(&self.threads,ack).map_err(Error::Delivery)?))
+        Ok(Acknowledgement::Pending(Pending(self.delivery.acknowledged(&self.threads,ack).map_err(Error::Delivery)?)))
     }
 }
 impl Receiving {
