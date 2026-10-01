@@ -190,7 +190,7 @@ dependencies = [
 [[package]]
 name = "cdlv"
 version = "0.1.0"
-source = "git+https://github.com/corbet-foss/cdlv?branch=main#d728fe0c83114a374ac45a25629885cbbfe62567"
+source = "git+https://github.com/corbet-foss/cdlv?branch=main#8063adc8612ac0746d874d20a64c9f7089384ae0"
 dependencies = [
  "ckmg",
  "ctcs",
@@ -498,7 +498,7 @@ dependencies = [
 [[package]]
 name = "cthr"
 version = "0.1.0"
-source = "git+https://github.com/corbet-foss/cthr?branch=main#ef2ecc3a0878ac7c2335954c6c77506bd9572b6a"
+source = "git+https://github.com/corbet-foss/cthr?branch=main#6dcdc1adbf67c31bab90b80aa0a9bc49b396ad9f"
 dependencies = [
  "cgrp",
  "ckmg",
