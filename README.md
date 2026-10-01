@@ -16,6 +16,8 @@ All product frontends use the cmsg door.
 
 ## Status
 
-Stream A scaffold only. No full reservation-to-release-to-Answer/direct-chat
-acceptance. Missing production evidence stays unavailable. See
+Stream A was committed first. Established-contact send/receive/ACK composition
+and owner-derived views are implemented locally but unvalidated. First-contact,
+room, live-session and record-network routes still await owner integration. No
+full reservation-to-release-to-Answer/direct-chat acceptance. See
 [contract](docs/CONTRACT.md) and [FSL license](LICENSE.md).
