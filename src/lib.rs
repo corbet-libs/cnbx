@@ -10,8 +10,8 @@ pub struct View {contacts:ctcs::Contacts,threads:cthr::Threads,delivery:cdlv::De
 pub struct Pending(cdlv::Candidate);
 pub struct Published(cdlv::Committed);
 /// An authenticated real MLS receive, still with no visible plaintext or ACK.
-pub enum Receive { Pending(Receiving), Duplicate(cdlv::Wire) }
-pub enum Acknowledgement { Pending(Pending), AlreadyAccepted([u8;32]) }
+pub enum Receive { Pending(Box<Receiving>), Duplicate(cdlv::Wire) }
+pub enum Acknowledgement { Pending(Box<Pending>), AlreadyAccepted([u8;32]) }
 pub struct Receiving {delivery:cdlv::Delivery,threads:cthr::Candidate,incoming:cdlv::Incoming}
 impl Inbox {
     pub fn new(binding:Binding)->Self {Self{binding}}
@@ -38,7 +38,7 @@ impl View {
             _=>return Err(Error::UnexpectedMessage),
         };
         let threads=self.threads.receive(keys,authority,incoming.ciphertext()).await.map_err(Error::Threads)?;
-        Ok(Receive::Pending(Receiving{delivery:self.delivery,threads,incoming}))
+        Ok(Receive::Pending(Box::new(Receiving{delivery:self.delivery,threads,incoming})))
     }
     pub async fn acknowledge(&self,wire:&[u8],devices:&mut impl ctcs::DeviceAuthority)->Result<Acknowledgement> {
         let ack=match self.delivery.authenticate(wire,devices,&self.contacts).await.map_err(Error::Delivery)? {
@@ -46,7 +46,7 @@ impl View {
             cdlv::Authenticated::AlreadyAccepted(message)=>return Ok(Acknowledgement::AlreadyAccepted(message)),
             _=>return Err(Error::UnexpectedMessage),
         };
-        Ok(Acknowledgement::Pending(Pending(self.delivery.acknowledged(&self.threads,ack).map_err(Error::Delivery)?)))
+        Ok(Acknowledgement::Pending(Box::new(Pending(self.delivery.acknowledged(&self.threads,ack).map_err(Error::Delivery)?))))
     }
 }
 impl Receiving {
