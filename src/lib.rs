@@ -56,6 +56,7 @@ impl Pending {
     }
 }
 impl Published {
+    pub fn outgoing_ids(&self)->Vec<[u8;32]> {self.0.threads.outgoing().iter().map(|output|*output.id()).collect()}
     pub fn history(&self)->&[cthr::Message] {self.0.threads.threads().history()}
     pub fn delivery_status(&self,message:&[u8;32])->Option<cdlv::Status> {self.0.delivery.status(message)}
     /// Persist the owner's exact transport envelope before exposing it to Mesh.
