@@ -3,6 +3,8 @@ when:
   - event: manual
 skip_clone: true
 variables:
+  SUPPLEMENT_SETUP: {default: ""}
+  SUPPLEMENT_SHA256: {default: ""}
   DEPENDENCY_SOURCE_ARCHIVE: {default: ""}
   DEPENDENCY_SOURCE_SHA256: {default: ""}
   SOURCE_ARCHIVE: {default: ""}
@@ -38,6 +40,12 @@ steps:
         test -n "$CI_TOOL_BINARY_SHA256"
         printf '%s  %s\n' "$CI_TOOL_BINARY_SHA256" "$CI_TOOL_BINARY" | sha256sum --check --strict
         test "$("$CI_TOOL_BINARY" source-revision)" = "$CCID_REVISION"
+        if [ -n "$SUPPLEMENT_SETUP" ] || [ -n "$SUPPLEMENT_SHA256" ]; then
+          test -n "$SUPPLEMENT_SETUP"
+          test -n "$SUPPLEMENT_SHA256"
+          printf '%s  %s\n' "$SUPPLEMENT_SHA256" "$SUPPLEMENT_SETUP" | sha256sum --check --strict
+          . "$SUPPLEMENT_SETUP"
+        fi
         TMPDIR="$${TMPDIR:-/tmp}"
         export TMPDIR
         set -eu
