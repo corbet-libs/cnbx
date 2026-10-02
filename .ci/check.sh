@@ -5,7 +5,7 @@ export CARGO_BUILD_JOBS=2
 export CARGO_NET_GIT_FETCH_WITH_CLI=true
 rustc -Vv
 sha256sum Cargo.lock
-python3 .github/check-first-party.py
+python3 .github/check-first-party.py --archive
 case "${1:?selected check required}" in
   native)
     cargo fmt --all --check
