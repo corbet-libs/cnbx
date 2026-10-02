@@ -1,7 +1,12 @@
 //! Thin device Inbox composition. Every fact and mutation comes from its owner.
 mod conversation;
-use ckmg::{Authority, Binding, Clock, Entropy, KeyHandle, Keys, SecureStore};
+pub use cdlv::{Status as DeliveryStatus, Wire};
+pub use ckmg::Binding;
+use ckmg::{Authority, Clock, Entropy, KeyHandle, Keys, SecureStore};
 pub use conversation::{ConversationView, Opened, Preparing};
+pub use ctcs::{DeviceAuthority, Relation, State as ContactState};
+pub use cthr::keys::{Custody, KeyPort};
+pub use cthr::{DirectAuthority, Event as ConversationEvent, Message, Operation};
 use cwst::{Store, backend::Backend};
 
 #[derive(
